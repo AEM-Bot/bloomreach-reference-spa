@@ -6,7 +6,7 @@ interface HelloWorldParameters {
 }
 
 export function HelloWorld({ component, page }: BrProps): React.ReactElement | null {
-  const { title } = component.getParameters<HelloWorldParameters>();
+  const { title } = component!.getParameters<HelloWorldParameters>();
 
   return (
     <div className="mw-container mx-auto my-4">
