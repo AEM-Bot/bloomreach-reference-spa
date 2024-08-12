@@ -47,6 +47,7 @@ import {
   SingleBannerCarouselX,
   TitleAndText,
   Video,
+  HelloWorld,
 } from '.';
 import { CommerceContextProvider } from './CommerceContext';
 
@@ -94,6 +95,7 @@ export function App({
     SearchBar,
     TitleAndText,
     Video,
+    HelloWorld,
   };
 
   const updateCookieConsentVal = (val: boolean): void => {
