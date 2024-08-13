@@ -26,6 +26,17 @@ interface MenuModels {
   menu: Reference;
 }
 
+interface Page {
+  getDocument: () => DocumentData;
+}
+
+interface DocumentData {
+  getData: () => Data;
+}
+interface Data {
+  id: string;
+}
+
 export function Menu(): React.ReactElement | null {
   const component = React.useContext(BrComponentContext);
   const page = React.useContext(BrPageContext);
@@ -39,11 +50,21 @@ export function Menu(): React.ReactElement | null {
   if (!isMenu(menu)) {
     return null;
   }
+
+  // Extract the documentId
+  const typedPage = page as Page | undefined;
+  const documentId = typedPage?.getDocument().getData().id;
   return (
-    <Nav as="ul" navbar className={`w-100 ${page!.isPreview() ? 'has-edit-button' : ''}`}>
-      <BrManageMenuButton menu={menu} />
-      {menu?.getItems().map((item) =>
-        (item.getChildren().length ? (
+    <div>
+      {/* New container element displaying the page ID */}
+      <div className="page-id-container">
+        Page UUID: {documentId}
+      </div>
+
+      <Nav as="ul" navbar className={`w-100 ${page!.isPreview() ? 'has-edit-button' : ''}`}>
+        <BrManageMenuButton menu={menu} />
+        {menu?.getItems().map((item) =>
+          (item.getChildren().length ? (
           <Dropdown as="li" key={item.getName()}>
             <Dropdown.Toggle as={MenuItem} item={item} />
 
@@ -55,11 +76,12 @@ export function Menu(): React.ReactElement | null {
               ))}
             </Dropdown.Menu>
           </Dropdown>
-        ) : (
+          ) : (
           <Nav.Item as="li" key={item.getName()}>
             <MenuItem item={item} />
           </Nav.Item>
-        )))}
-    </Nav>
+          )))}
+      </Nav>
+    </div>
   );
 }
