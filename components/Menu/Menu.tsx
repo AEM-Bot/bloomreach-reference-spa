@@ -39,27 +39,38 @@ export function Menu(): React.ReactElement | null {
   if (!isMenu(menu)) {
     return null;
   }
-  return (
-    <Nav as="ul" navbar className={`w-100 ${page!.isPreview() ? 'has-edit-button' : ''}`}>
-      <BrManageMenuButton menu={menu} />
-      {menu?.getItems().map((item) =>
-        (item.getChildren().length ? (
-          <Dropdown as="li" key={item.getName()}>
-            <Dropdown.Toggle as={MenuItem} item={item} />
 
-            <Dropdown.Menu className="mt-lg-3">
-              {item.getChildren().map((subitem) => (
-                <Dropdown.Item key={subitem.getName()} as={MenuLink} to={subitem}>
-                  {subitem.getName()}
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
-        ) : (
-          <Nav.Item as="li" key={item.getName()}>
-            <MenuItem item={item} />
-          </Nav.Item>
-        )))}
-    </Nav>
+  // Extract the documentId
+  const documentId = page?.getDocument().getData().id;
+
+  return (
+    <div>
+      {/* New container element displaying the page ID */}
+      <div className="page-id-container">
+        Page UUID: {documentId}
+      </div>
+
+      <Nav as="ul" navbar className={`w-100 ${page!.isPreview() ? 'has-edit-button' : ''}`}>
+        <BrManageMenuButton menu={menu} />
+        {menu?.getItems().map((item) =>
+          (item.getChildren().length ? (
+            <Dropdown as="li" key={item.getName()}>
+              <Dropdown.Toggle as={MenuItem} item={item} />
+
+              <Dropdown.Menu className="mt-lg-3">
+                {item.getChildren().map((subitem) => (
+                  <Dropdown.Item key={subitem.getName()} as={MenuLink} to={subitem}>
+                    {subitem.getName()}
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown>
+          ) : (
+            <Nav.Item as="li" key={item.getName()}>
+              <MenuItem item={item} />
+            </Nav.Item>
+          )))}
+      </Nav>
+    </div>
   );
 }
