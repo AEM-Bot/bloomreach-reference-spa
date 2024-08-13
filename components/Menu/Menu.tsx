@@ -26,6 +26,17 @@ interface MenuModels {
   menu: Reference;
 }
 
+interface Page {
+  getDocument: () => DocumentData;
+}
+
+interface DocumentData {
+  getData: () => Data;
+}
+interface Data {
+  id: string;
+}
+
 export function Menu(): React.ReactElement | null {
   const component = React.useContext(BrComponentContext);
   const page = React.useContext(BrPageContext);
@@ -41,8 +52,8 @@ export function Menu(): React.ReactElement | null {
   }
 
   // Extract the documentId
-  const documentId = page?.getDocument().getData().id;
-
+  const typedPage = page as Page | undefined;
+  const documentId = typedPage?.getDocument().getData().id;
   return (
     <div>
       {/* New container element displaying the page ID */}
@@ -54,21 +65,21 @@ export function Menu(): React.ReactElement | null {
         <BrManageMenuButton menu={menu} />
         {menu?.getItems().map((item) =>
           (item.getChildren().length ? (
-            <Dropdown as="li" key={item.getName()}>
-              <Dropdown.Toggle as={MenuItem} item={item} />
+          <Dropdown as="li" key={item.getName()}>
+            <Dropdown.Toggle as={MenuItem} item={item} />
 
-              <Dropdown.Menu className="mt-lg-3">
-                {item.getChildren().map((subitem) => (
-                  <Dropdown.Item key={subitem.getName()} as={MenuLink} to={subitem}>
-                    {subitem.getName()}
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            </Dropdown>
+            <Dropdown.Menu className="mt-lg-3">
+              {item.getChildren().map((subitem) => (
+                <Dropdown.Item key={subitem.getName()} as={MenuLink} to={subitem}>
+                  {subitem.getName()}
+                </Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
           ) : (
-            <Nav.Item as="li" key={item.getName()}>
-              <MenuItem item={item} />
-            </Nav.Item>
+          <Nav.Item as="li" key={item.getName()}>
+            <MenuItem item={item} />
+          </Nav.Item>
           )))}
       </Nav>
     </div>
