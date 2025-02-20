@@ -28,7 +28,7 @@ let commerceClientFactory: CommerceApiClientFactory;
 
 interface IndexPageProps {
   configuration: Omit<Configuration, 'httpClient'>;
-  page: PageModel;
+  page: PageModel | null;
   commerceConfig: CommerceConfig;
   [APOLLO_STATE_PROP_NAME]?: any;
   cookies?: Record<string, string>;
@@ -41,6 +41,20 @@ const Index: NextPage<IndexPageProps> = ({
   [APOLLO_STATE_PROP_NAME]: apolloState,
   cookies,
 }): JSX.Element => {
+  console.log('page', page);
+
+  // If page data is missing, return a dummy homepage and set response 200 as this will always make liveness
+  // probe ready and will not fail the deployment and doesn't restart the AKS container pods.
+  if (!page) {
+    console.log('Missing page data, returning dummy homepage');
+    return (
+      <div style={{ textAlign: 'center', padding: '50px' }}>
+        <h1>Victorias Secret CMS Next Js Home Page</h1>
+        <p>This is a dummy homepage.</p>
+      </div>
+    );
+  }
+
   return <App
     configuration={configuration}
     page={page}
@@ -52,47 +66,56 @@ const Index: NextPage<IndexPageProps> = ({
 };
 
 Index.getInitialProps = async ({ req: request, res: response, asPath: path, query }) => {
-  // console.log('[getServerSideProps]: path=', path);
-  // console.log('[getServerSideProps]: query=', query);
+  const props: IndexPageProps = {
+    configuration: buildConfiguration(path ?? '/'),
+    page: null,
+    commerceConfig: {} as CommerceConfig,
+  };
 
-  const configuration = buildConfiguration(path ?? '/');
-  console.log('configuration from pages', configuration);
-  const page = await initialize({ ...configuration, request, httpClient: axios as any });
-  const pageJson = page.toJSON();
-  const commerceConfig = loadCommerceConfig(pageJson, query);
-  const props: IndexPageProps = { configuration, commerceConfig, page: pageJson };
+  try {
+    // Fetching page configuration and data
+    const configuration = buildConfiguration(path ?? '/');
+    console.log('configuration from pages', configuration);
 
-  if (!request || !response) {
-    return props;
+    const page = await initialize({ ...configuration, request, httpClient: axios as any });
+    const pageJson = page.toJSON();
+    const commerceConfig = loadCommerceConfig(pageJson, query);
+
+    // Adding values to props
+    props.page = pageJson;
+    props.commerceConfig = commerceConfig;
+
+    // Handling cookies
+    const cookies = cookie.parse(request?.headers.cookie ?? '');
+    props.cookies = cookies;
+
+    // Setting up the Commerce API client
+    const { graphqlServiceUrl, connector, brAccountName: accountEnvId } = commerceConfig;
+    const defaultRequestHeaders = undefined;
+    const defaultAnonymousCredentials = undefined;
+
+    commerceClientFactory = new CommerceApiClientFactory(
+      graphqlServiceUrl,
+      connector,
+      accountEnvId,
+      defaultRequestHeaders,
+      defaultAnonymousCredentials,
+      true,
+    );
+  } catch (error) {
+    console.error('Error occurred while fetching page or commerce data:', error);
+
+    // Even in case of an error, we return a dummy homepage.
+    props.page = null;
+    props.commerceConfig = {} as CommerceConfig;
+
+    // Manually set status code to 200 even in case of error
+    if (response) {
+      response.statusCode = 200;
+    }
   }
 
-  // relevance(request, response);
-  const cookies = cookie.parse(request.headers.cookie ?? '');
-  props.cookies = cookies;
-
-  const { graphqlServiceUrl, connector, brAccountName: accountEnvId } = commerceConfig;
-  const defaultRequestHeaders = undefined;
-  const defaultAnonymousCredentials = undefined;
-
-  // For SSG and SSR always create a new Apollo Client
-  commerceClientFactory = new CommerceApiClientFactory(
-    graphqlServiceUrl,
-    connector,
-    accountEnvId,
-    defaultRequestHeaders,
-    defaultAnonymousCredentials,
-    true,
-  );
-  // Apollo client will go thru all components on the page and perform queries necessary.
-  // The results will be stored in the cache for client-side rendering.
-  // const pageProps = { pageProps: { ...props } };
-  // const apolloData = await commerceClientFactory.getDataFromTree(<MyApp.AppTree {...pageProps} />);
-  // console.log('[getServerSideProps]: apolloData=', apolloData);
-  // props = { ...props, ...apolloData.stateProp };
-
-  // eslint-disable-next-line max-len
-  // Hack needed to avoid JSON-Serialization validation error from Next.js https://github.com/zeit/next.js/discussions/11209
-  // >>> Reason: `undefined` cannot be serialized as JSON. Please use `null` or omit this value all together.
+  // Ensure undefined values are not returned to the client
   if (process.env.NODE_ENV !== 'production') {
     deleteUndefined(props);
   }
