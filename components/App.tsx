@@ -48,6 +48,7 @@ import {
   TitleAndText,
   Video,
   HelloWorld,
+  Carousel,
 } from '.';
 import { CommerceContextProvider } from './CommerceContext';
 
@@ -77,6 +78,7 @@ export function App({
   const mapping = {
     BannerCollection,
     BannerCTA,
+    Carousel,
     CategoryHighlight,
     Content,
     ContentPage,

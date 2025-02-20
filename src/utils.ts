@@ -105,9 +105,15 @@ export function buildConfiguration(
     const endpointQueryParameter = 'endpoint';
     const { url, searchParams } = extractSearchParams(path, [endpointQueryParameter].filter(Boolean));
 
+    console.log('Configuration url', url);
+    console.log('Configuration searchParams', searchParams);
     configuration.endpoint = searchParams.get(endpointQueryParameter) ?? '';
     configuration.baseUrl = `?${endpointQueryParameter}=${searchParams.get(endpointQueryParameter)}`;
     configuration.path = url;
+
+    console.log('Configuration configuration', configuration);
+    console.log('Configuration path', configuration.path);
+    console.log('Configuration endpoint', configuration.endpoint);
   }
   return configuration;
 }
