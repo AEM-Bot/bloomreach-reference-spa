@@ -38,3 +38,4 @@ export * from './SingleBannerCarousel';
 export * from './TitleAndText';
 export * from './Video';
 export * from './HelloWorld';
+export * from './Carousel';
